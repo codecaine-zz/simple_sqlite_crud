@@ -151,42 +151,44 @@ class SQLiteCRUD:
         self.conn.close()
 
 
-# Example usage:
-# Create an instance of SQLiteCRUD
-db = SQLiteCRUD('company.db')
 
-# Create the 'employees' table
-db.create_table('employees', {
-    'id': 'INTEGER PRIMARY KEY',
-    'first_name': 'TEXT',
-    'last_name': 'TEXT',
-    'email': 'TEXT',
-    'department': 'TEXT'
-})
+if __name__ == '__main__':
+    # Example usage:
+    # Create an instance of SQLiteCRUD
+    db = SQLiteCRUD('company.db')
 
-# Insert a new employee
-db.insert('employees', {
-    'id': 1,
-    'first_name': 'John',
-    'last_name': 'Doe',
-    'email': 'john.doe@example.com',
-    'department': 'Engineering'
-})
+    # Create the 'employees' table
+    db.create_table('employees', {
+        'id': 'INTEGER PRIMARY KEY',
+        'first_name': 'TEXT',
+        'last_name': 'TEXT',
+        'email': 'TEXT',
+        'department': 'TEXT'
+    })
 
-# Read the 'employees' table
-print(db.read('employees'))
+    # Insert a new employee
+    db.insert('employees', {
+        'id': 1,
+        'first_name': 'John',
+        'last_name': 'Doe',
+        'email': 'john.doe@example.com',
+        'department': 'Engineering'
+    })
 
-# Update an employee's email
-db.update('employees', {'email': 'j.doe@example.com'}, {'id': 1})
+    # Read the 'employees' table
+    print(db.read('employees'))
 
-# Read the 'employees' table again
-print(db.read('employees'))
+    # Update an employee's email
+    db.update('employees', {'email': 'j.doe@example.com'}, {'id': 1})
 
-# Delete an employee
-db.delete('employees', {'id': 1})
+    # Read the 'employees' table again
+    print(db.read('employees'))
 
-# Read the 'employees' table one more time
-print(db.read('employees'))
+    # Delete an employee
+    db.delete('employees', {'id': 1})
 
-# Close the database connection
-db.close()
+    # Read the 'employees' table one more time
+    print(db.read('employees'))
+
+    # Close the database connection
+    db.close()
