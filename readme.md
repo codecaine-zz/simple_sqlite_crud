@@ -9,7 +9,7 @@ This repository contains a simple example of how to perform CRUD (Create, Read, 
 ```python
 class Employee(Base):
     __tablename__ = 'employees'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     first_name = Column(String)
     last_name = Column(String)
     email = Column(String)
@@ -22,7 +22,7 @@ class Employee(Base):
 
 class Department(Base):
     __tablename__ = 'departments'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, unique=True)
     location = Column(String)
 
@@ -33,6 +33,14 @@ class Department(Base):
 class SQLiteCRUD:
     def __init__(self, db_name: str) -> None:
         self.engine = create_engine(f'sqlite:///{db_name}')
+        
+        @event.listens_for(self.engine, "connect")
+        def regexp_connection(dbapi_connection, connection_record):
+            import re
+            def regexp(expr, item):
+                return re.search(expr, item) is not None
+            dbapi_connection.create_function("REGEXP", 2, regexp)
+        
         Base.metadata.create_all(self.engine)
         self.Session = sessionmaker(bind=self.engine)
         self.session: Session = self.Session()
