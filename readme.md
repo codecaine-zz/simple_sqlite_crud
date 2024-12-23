@@ -7,6 +7,9 @@ This repository contains a simple example of how to perform CRUD (Create, Read, 
 ### Example
 
 ```python
+Base = declarative_base()
+
+
 class Employee(Base):
     __tablename__ = "employees"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -53,14 +56,14 @@ class SQLiteCRUD:
         self.Session = sessionmaker(bind=self.engine)
         self.session: Session = self.Session()
 
-    def insert(self, employee: Employee) -> None:
+    def insert(self, obj: Base) -> None:
         try:
-            self.session.add(employee)
+            self.session.add(obj)
             self.session.commit()
         except IntegrityError:
             self.session.rollback()
             print(
-                f"Warning: ID {employee.id} already exists. Ignoring insert operation."
+                f"Warning: Could not insert {obj}. A unique constraint was violated."
             )
         except Exception as e:
             self.session.rollback()
