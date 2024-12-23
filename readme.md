@@ -1,197 +1,106 @@
-# A simple Sqlite3 CRUD manager class for Python 3.6+.
+# SQLite CRUD Example
 
-```python
-import sqlite3
+This repository contains a simple example of how to perform CRUD (Create, Read, Update, Delete) operations using SQLite and SQLAlchemy in Python.
 
+## File Overview
 
-class SQLiteCRUD:
-    """
-    A class used to perform CRUD operations on a SQLite database.
+### `sqlite_example.py`
 
-    Attributes
-    ----------
-    conn : sqlite3.Connection
-        A SQLite connection object to the database.
-    cursor : sqlite3.Cursor
-        A cursor object used to send SQL commands to a SQLite database.
+This script demonstrates how to use SQLAlchemy to interact with an SQLite database. It defines an `Employee` model and a `SQLiteCRUD` class to handle database operations.
 
-    Methods
-    -------
-    create_table(table_name, fields)
-        Creates a table with the given name and fields if it does not exist.
+### Key Components
 
-    insert(table_name, data)
-        Inserts a new row into the specified table with the provided data.
+- **Employee Model**: Defines the structure of the `employees` table.
+- **SQLiteCRUD Class**: Provides methods to perform CRUD operations on the `employees` table.
 
-    read(table_name, conditions=None)
-        Reads and returns rows from the specified table that meet the conditions.
+### Usage
 
-    update(table_name, data, conditions)
-        Updates rows in the specified table based on the provided conditions.
-
-    delete(table_name, conditions)
-        Deletes rows from the specified table that meet the conditions.
-
-    close()
-        Closes the database connection.
-    """
-
-    def __init__(self, db_name):
-        """
-        Constructs all the necessary attributes for the SQLiteCRUD object.
-
-        Parameters
-        ----------
-        db_name : str
-            The name of the database file.
-        """
-        self.conn = sqlite3.connect(db_name)
-        self.cursor = self.conn.cursor()
-
-    def create_table(self, table_name, fields):
-        """
-        Creates a table with the given name and fields if it does not exist.
-
-        Parameters
-        ----------
-        table_name : str
-            The name of the table to create.
-        fields : dict
-            A dictionary of field names and their data types.
-        """
-        fields_str = ', '.join(f'{k} {v}' for k, v in fields.items())
-        self.cursor.execute(
-            f'CREATE TABLE IF NOT EXISTS {table_name} ({fields_str})')
-        self.conn.commit()
-
-    def insert(self, table_name, data):
-        """
-        Inserts a new row into the specified table with the provided data.
-
-        Parameters
-        ----------
-        table_name : str
-            The name of the table to insert data into.
-        data : dict
-            A dictionary of field names and their values to insert.
-        """
-        placeholders = ', '.join('?' * len(data))
-        fields = ', '.join(data.keys())
-        try:
-            self.cursor.execute(
-                f'INSERT INTO {table_name} ({fields}) VALUES ({placeholders})', list(data.values()))
-            self.conn.commit()
-        except sqlite3.IntegrityError:
-            print(
-                f"Warning: ID already exists in {table_name}. Ignoring insert operation.")
-
-    def read(self, table_name, conditions=None):
-        """
-        Reads and returns rows from the specified table that meet the conditions.
-
-        Parameters
-        ----------
-        table_name : str
-            The name of the table to read from.
-        conditions : dict, optional
-            A dictionary of field names and their values to filter results.
-
-        Returns
-        -------
-        list
-            A list of rows that meet the conditions.
-        """
-        query = f'SELECT * FROM {table_name}'
-        if conditions:
-            query += ' WHERE ' + \
-                ' AND '.join(f'{k} = ?' for k in conditions.keys())
-            self.cursor.execute(query, list(conditions.values()))
-        else:
-            self.cursor.execute(query)
-        return self.cursor.fetchall()
-
-    def update(self, table_name, data, conditions):
-        """
-        Updates rows in the specified table based on the provided conditions.
-
-        Parameters
-        ----------
-        table_name : str
-            The name of the table to update.
-        data : dict
-            A dictionary of field names and their new values.
-        conditions : dict
-            A dictionary of field names and their values to filter which rows to update.
-        """
-        query = f'UPDATE {table_name} SET ' + \
-            ', '.join(f'{k} = ?' for k in data.keys())
-        query += ' WHERE ' + \
-            ' AND '.join(f'{k} = ?' for k in conditions.keys())
-        self.cursor.execute(query, list(data.values()) +
-                            list(conditions.values()))
-        self.conn.commit()
-
-    def delete(self, table_name, conditions):
-        """
-        Deletes rows from the specified table that meet the conditions.
-
-        Parameters
-        ----------
-        table_name : str
-            The name of the table to delete from.
-        conditions : dict
-            A dictionary of field names and their values to filter which rows to delete.
-        """
-        query = f'DELETE FROM {table_name} WHERE ' + \
-            ' AND '.join(f'{k} = ?' for k in conditions.keys())
-        self.cursor.execute(query, list(conditions.values()))
-        self.conn.commit()
-
-    def close(self):
-        """
-        Closes the database connection.
-        """
-        self.conn.close()
-
-
-if __name__ == '__main__':
-    # Example usage:
-    # Create an instance of SQLiteCRUD
+1. **Initialization**: Create an instance of `SQLiteCRUD` with the database name.
+    ```python
     db = SQLiteCRUD('company.db')
+    ```
 
-    # Create the 'employees' table
-    db.create_table('employees', {
-        'id': 'INTEGER PRIMARY KEY',
-        'first_name': 'TEXT',
-        'last_name': 'TEXT',
-        'email': 'TEXT',
-        'department': 'TEXT'
-    })
+2. **Insert**: Add new employees to the database.
+    ```python
+    db.insert(Employee(id=1, first_name='John', last_name='Doe', email='john.doe@example.com', department='Engineering'))
+    ```
 
-    # Insert a new employee
-    db.insert('employees', {
-        'id': 1,
-        'first_name': 'John',
-        'last_name': 'Doe',
-        'email': 'john.doe@example.com',
-        'department': 'Engineering'
-    })
+3. **Read**: Retrieve employees based on conditions.
+    ```python
+    employees = db.read({'department': 'Engineering'})
+    ```
 
-    # Read the 'employees' table
-    print(db.read('employees'))
+4. **Update**: Update employee details.
+    ```python
+    db.update({'id': 1}, {'email': 'j.doe@example.com'})
+    ```
 
-    # Update an employee's email
-    db.update('employees', {'email': 'j.doe@example.com'}, {'id': 1})
+5. **Delete**: Remove employees from the database.
+    ```python
+    db.delete({'id': 1})
+    ```
 
-    # Read the 'employees' table again
-    print(db.read('employees'))
-
-    # Delete an employee
-    db.delete('employees', {'id': 1})
-
-    # Read the 'employees' table one more time
-    print(db.read('employees'))
-
-    # Close the database connection
+6. **Close**: Close the database connection.
+    ```python
     db.close()
+    ```
+
+### Example Usage
+
+The script includes an example usage section that demonstrates how to perform various operations:
+
+- Insert new employees
+- Read employees based on different conditions
+- Update an employee's email
+- Delete an employee
+- Use advanced filters like `gt`, `lt`, `contains`, `in_`, and `regex`
+
+#### Advanced Filters
+
+- **Greater Than (`gt`)**: Retrieve employees with IDs greater than 1.
+    ```python
+    employees = db.read({'id': {'gt': 1}})
+    ```
+
+- **Less Than (`lt`)**: Retrieve employees with IDs less than 5.
+    ```python
+    employees = db.read({'id': {'lt': 5}})
+    ```
+
+- **Contains (`contains`)**: Retrieve employees whose department contains 'Eng'.
+    ```python
+    employees = db.read({'department': {'contains': 'Eng'}})
+    ```
+
+- **In List (`in_`)**: Retrieve employees whose IDs are in the list [1, 2, 3].
+    ```python
+    employees = db.read({'id': {'in_': [1, 2, 3]}})
+    ```
+
+- **Regular Expression (`regex`)**: Retrieve employees whose email matches the regex pattern.
+    ```python
+    employees = db.read({'email': {'regex': r'@example\.com$'}})
+    ```
+
+### Running the Script
+
+To run the script, simply execute it with Python:
+```sh
+python sqlite_example.py
 ```
+
+This will perform the example operations and print the results to the console.
+
+### Dependencies
+
+- SQLAlchemy
+- SQLite (included with Python)
+
+Install SQLAlchemy using pip:
+```sh
+pip install sqlalchemy
+```
+
+### License
+
+This project is licensed under the MIT License.
