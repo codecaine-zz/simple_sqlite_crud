@@ -20,6 +20,16 @@ class Employee(Base):
                 f"last_name='{self.last_name}', email='{self.email}', "
                 f"department='{self.department}')>")
 
+class Department(Base):
+    __tablename__ = 'departments'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    location = Column(String)
+
+    def __repr__(self) -> str:
+        return (f"<Department(id={self.id}, name='{self.name}', "
+                f"location='{self.location}')>")
+
 class SQLiteCRUD:
     def __init__(self, db_name: str) -> None:
         self.engine = create_engine(f'sqlite:///{db_name}')
@@ -38,44 +48,44 @@ class SQLiteCRUD:
             self.session.rollback()
             print(f"Error: {e}")
 
-    def read(self, conditions: Optional[Dict[str, Any]] = None) -> List[Employee]:
-        query = self.session.query(Employee)
+    def read(self, table: Base, conditions: Optional[Dict[str, Any]] = None) -> List[Base]:
+        query = self.session.query(table)
         if conditions:
             for attr, condition in conditions.items():
                 if isinstance(condition, dict):
                     for op, value in condition.items():
                         if op == 'lt':
-                            query = query.filter(getattr(Employee, attr) < value)
+                            query = query.filter(getattr(table, attr) < value)
                         elif op == 'gt':
-                            query = query.filter(getattr(Employee, attr) > value)
+                            query = query.filter(getattr(table, attr) > value)
                         elif op == 'lte':
-                            query = query.filter(getattr(Employee, attr) <= value)
+                            query = query.filter(getattr(table, attr) <= value)
                         elif op == 'gte':
-                            query = query.filter(getattr(Employee, attr) >= value)
+                            query = query.filter(getattr(table, attr) >= value)
                         elif op == 'neq':
-                            query = query.filter(getattr(Employee, attr) != value)
+                            query = query.filter(getattr(table, attr) != value)
                         elif op == 'contains':
-                            query = query.filter(getattr(Employee, attr).contains(value))
+                            query = query.filter(getattr(table, attr).contains(value))
                         elif op == 'in_':
-                            query = query.filter(getattr(Employee, attr).in_(value))
+                            query = query.filter(getattr(table, attr).in_(value))
                         elif op == 'regex':
-                            query = query.filter(getattr(Employee, attr).op('REGEXP')(value))
+                            query = query.filter(getattr(table, attr).op('REGEXP')(value))
                         # Add more operators as needed
                 else:
-                    query = query.filter(getattr(Employee, attr) == condition)
+                    query = query.filter(getattr(table, attr) == condition)
         return query.all()
 
-    def update(self, conditions: Dict[str, Any], data: Dict[str, Any]) -> None:
-        query = self.session.query(Employee)
+    def update(self, table: Base, conditions: Dict[str, Any], data: Dict[str, Any]) -> None:
+        query = self.session.query(table)
         for attr, value in conditions.items():
-            query = query.filter(getattr(Employee, attr) == value)
+            query = query.filter(getattr(table, attr) == value)
         query.update(data)
         self.session.commit()
 
-    def delete(self, conditions: Dict[str, Any]) -> None:
-        query = self.session.query(Employee)
+    def delete(self, table: Base, conditions: Dict[str, Any]) -> None:
+        query = self.session.query(table)
         for attr, value in conditions.items():
-            query = query.filter(getattr(Employee, attr) == value)
+            query = query.filter(getattr(table, attr) == value)
         query.delete()
         self.session.commit()
 
@@ -94,39 +104,61 @@ if __name__ == '__main__':
     db.insert(Employee(id=3, first_name='Alice', last_name='Johnson', email='alice.johnson@example.com', department='Engineering'))
 
     # Read employees from the 'Engineering' department
-    print("Engineering Department:", db.read({'department': 'Engineering'}))
+    print("Engineering Department:", db.read(Employee, {'department': 'Engineering'}))
 
     # Read employees with the last name 'Smith'
-    print("Employees with last name Smith:", db.read({'last_name': 'Smith'}))
+    print("Employees with last name Smith:", db.read(Employee, {'last_name': 'Smith'}))
 
     # Read employees with the first name 'Alice' and department 'Engineering'
-    print("Alice in Engineering:", db.read({'first_name': 'Alice', 'department': 'Engineering'}))
+    print("Alice in Engineering:", db.read(Employee, {'first_name': 'Alice', 'department': 'Engineering'}))
 
     # Read the 'employees' table
-    print("All employees:", db.read())
+    print("All employees:", db.read(Employee))
 
     # Update an employee's email
-    db.update({'id': 1}, {'email': 'j.doe@example.com'})
+    db.update(Employee, {'id': 1}, {'email': 'j.doe@example.com'})
 
     # Verify the update operation
-    print("Updated employee with id 1:", db.read({'id': 1}))
+    print("Updated employee with id 1:", db.read(Employee, {'id': 1}))
 
     # Read the 'employees' table again
-    print("All employees after update:", db.read())
+    print("All employees after update:", db.read(Employee))
 
     # Delete an employee
-    db.delete({'id': 1})
+    db.delete(Employee, {'id': 1})
 
     # Read the 'employees' table one more time
-    print("All employees after deletion:", db.read())
+    print("All employees after deletion:", db.read(Employee))
 
     # Example of using new filters
-    print("Employees with id greater than 1:", db.read({'id': {'gt': 1}}))
-    print("Employees with first name containing 'Jane':", db.read({'first_name': {'contains': 'Jane'}}))
-    print("Employees with id less than or equal to 3:", db.read({'id': {'lte': 3}}))
-    print("Employees with id not equal to 2:", db.read({'id': {'neq': 2}}))
-    print("Employees with id in [1, 3]:", db.read({'id': {'in_': [1, 3]}}))
-    print("Employees with email matching regex '.*@example.com':", db.read({'email': {'regex': '.*@example.com'}}))
+    print("Employees with id greater than 1:", db.read(Employee, {'id': {'gt': 1}}))
+    print("Employees with first name containing 'Jane':", db.read(Employee, {'first_name': {'contains': 'Jane'}}))
+    print("Employees with id less than or equal to 3:", db.read(Employee, {'id': {'lte': 3}}))
+    print("Employees with id not equal to 2:", db.read(Employee, {'id': {'neq': 2}}))
+    print("Employees with id in [1, 3]:", db.read(Employee, {'id': {'in_': [1, 3]}}))
+    print("Employees with email matching regex '.*@example.com':", db.read(Employee, {'email': {'regex': '.*@example.com'}}))
+
+    # Insert a new department
+    db.insert(Department(id=1, name='Engineering', location='Building A'))
+
+    # Insert more departments
+    db.insert(Department(id=2, name='Marketing', location='Building B'))
+    db.insert(Department(id=3, name='HR', location='Building C'))
+
+    # Read departments
+    print("All departments:", db.read(Department))
+
+    # Update a department's location
+    db.update(Department, {'id': 1}, {'location': 'Building D'})
+
+    # Verify the update operation
+    print("Updated department with id 1:", db.read(Department, {'id': 1}))
+
+    # Delete a department
+    db.delete(Department, {'id': 1})
+
+    # Read the 'departments' table one more time
+    print("All departments after deletion:", db.read(Department))
 
     # Close the database connection
     db.close()
